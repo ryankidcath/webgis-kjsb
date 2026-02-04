@@ -2,12 +2,35 @@ export type PenggunaanTanah = "pertanian" | "hunian" | "komersial" | "industri" 
 
 export type PenggunaanTanahB = "pertanian" | "non_pertanian";
 
+export interface KlienRow {
+  id: string;
+  nama_klien: string;
+  nomor_telepon_klien: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PemohonRow {
+  id: string;
+  nama_pemohon: string;
+  nomor_telepon_pemohon: string | null;
+  nik_pemohon: string | null;
+  alamat_pemohon: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface ProyekTahap1 {
   tgl_permohonan?: string;
-  nama_klien?: string;
-  hp_klien?: string;
-  nama_pemohon?: string;
-  hp_pemohon?: string;
+  klien_id?: string | null;
+  pemohon_id?: string | null;
+  klienBaru?: { nama_klien: string; nomor_telepon_klien?: string };
+  pemohonBaru?: {
+    nama_pemohon: string;
+    nomor_telepon_pemohon?: string;
+    nik_pemohon?: string;
+    alamat_pemohon?: string;
+  };
   luas_permohonan?: number;
   penggunaan_tanah_a?: PenggunaanTanah;
   no_tanda_terima?: string;
@@ -72,10 +95,10 @@ export interface ProyekRow {
   geom?: unknown;
   luas_hitung_otomatis?: number | null;
   tgl_permohonan?: string | null;
-  nama_klien?: string | null;
-  hp_klien?: string | null;
-  nama_pemohon?: string | null;
-  hp_pemohon?: string | null;
+  klien_id?: string | null;
+  pemohon_id?: string | null;
+  klien?: Pick<KlienRow, "nama_klien" | "nomor_telepon_klien"> | null;
+  pemohon?: Pick<PemohonRow, "nama_pemohon" | "nomor_telepon_pemohon" | "nik_pemohon" | "alamat_pemohon"> | null;
   luas_permohonan?: number | null;
   penggunaan_tanah_a?: PenggunaanTanah | null;
   no_tanda_terima?: string | null;

@@ -122,7 +122,7 @@ export default function ProyekDetailSidebar({ proyek, onClose, loading }: Proyek
       <div className="p-4 border-b border-slate-200 flex items-center justify-between shrink-0 bg-white">
         <div className="min-w-0">
           <h2 className="font-semibold text-slate-900 truncate">{proyek.kode_kjsb ?? "–"}</h2>
-          <p className="text-sm text-slate-500 truncate">{proyek.nama_pemohon ?? "–"}</p>
+          <p className="text-sm text-slate-500 truncate">{proyek.pemohon?.nama_pemohon ?? "–"}</p>
         </div>
         <button
           type="button"
@@ -136,10 +136,12 @@ export default function ProyekDetailSidebar({ proyek, onClose, loading }: Proyek
       <div className="p-4 overflow-y-auto space-y-4">
         <Section title="Administrasi Permohonan" icon={FileText}>
           <Row label="Tgl. Permohonan" value={formatDate(proyek.tgl_permohonan)} />
-          <Row label="Nama Klien" value={proyek.nama_klien} />
-          <Row label="HP Klien" value={proyek.hp_klien} />
-          <Row label="Nama Pemohon" value={proyek.nama_pemohon} />
-          <Row label="HP Pemohon" value={proyek.hp_pemohon} />
+          <Row label="Nama Klien" value={proyek.klien?.nama_klien} />
+          <Row label="Nomor Telepon Klien" value={proyek.klien?.nomor_telepon_klien} />
+          <Row label="Nama Pemohon" value={proyek.pemohon?.nama_pemohon} />
+          <Row label="Nomor Telepon Pemohon" value={proyek.pemohon?.nomor_telepon_pemohon} />
+          <Row label="NIK Pemohon" value={proyek.pemohon?.nik_pemohon} />
+          <Row label="Alamat Pemohon" value={proyek.pemohon?.alamat_pemohon} />
           <Row label="Luas Permohonan (m²)" value={formatNum(proyek.luas_permohonan)} />
           <Row label="Penggunaan Tanah" value={proyek.penggunaan_tanah_a ?? undefined} />
           <Row label="No. Tanda Terima" value={proyek.no_tanda_terima} />

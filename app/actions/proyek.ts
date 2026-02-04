@@ -2,6 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import type {
+  KlienRow,
+  PemohonRow,
   ProyekRow,
   ProyekTahap1,
   ProyekTahap2,
@@ -11,16 +13,104 @@ import type {
   ProyekMapFeature,
 } from "@/types/proyek";
 
+export async function searchKlien(query: string): Promise<KlienRow[]> {
+  const supabase = createClient();
+  const q = (query || "").trim();
+  if (!q) return [];
+  const { data, error } = await supabase
+    .from("klien")
+    .select("id, nama_klien, nomor_telepon_klien, created_at, updated_at")
+    .ilike("nama_klien", `%${q}%`)
+    .limit(10)
+    .order("nama_klien");
+  if (error) return [];
+  return (data ?? []) as KlienRow[];
+}
+
+export async function searchPemohon(query: string): Promise<PemohonRow[]> {
+  const supabase = createClient();
+  const q = (query || "").trim();
+  if (!q) return [];
+  const { data, error } = await supabase
+    .from("pemohon")
+    .select("id, nama_pemohon, nomor_telepon_pemohon, nik_pemohon, alamat_pemohon, created_at, updated_at")
+    .ilike("nama_pemohon", `%${q}%`)
+    .limit(10)
+    .order("nama_pemohon");
+  if (error) return [];
+  return (data ?? []) as PemohonRow[];
+}
+
+export async function createKlien(payload: {
+  nama_klien: string;
+  nomor_telepon_klien?: string;
+}): Promise<KlienRow | { error: string }> {
+  const supabase = createClient();
+  const nama = (payload.nama_klien || "").trim();
+  if (!nama) return { error: "Nama klien wajib diisi" };
+  const { data, error } = await supabase
+    .from("klien")
+    .insert({ nama_klien: nama, nomor_telepon_klien: (payload.nomor_telepon_klien || "").trim() || null })
+    .select("id, nama_klien, nomor_telepon_klien, created_at, updated_at")
+    .single();
+  if (error) return { error: error.message };
+  return data as KlienRow;
+}
+
+export async function createPemohon(payload: {
+  nama_pemohon: string;
+  nomor_telepon_pemohon?: string;
+  nik_pemohon?: string;
+  alamat_pemohon?: string;
+}): Promise<PemohonRow | { error: string }> {
+  const supabase = createClient();
+  const nama = (payload.nama_pemohon || "").trim();
+  if (!nama) return { error: "Nama pemohon wajib diisi" };
+  const { data, error } = await supabase
+    .from("pemohon")
+    .insert({
+      nama_pemohon: nama,
+      nomor_telepon_pemohon: (payload.nomor_telepon_pemohon || "").trim() || null,
+      nik_pemohon: (payload.nik_pemohon || "").trim() || null,
+      alamat_pemohon: (payload.alamat_pemohon || "").trim() || null,
+    })
+    .select("id, nama_pemohon, nomor_telepon_pemohon, nik_pemohon, alamat_pemohon, created_at, updated_at")
+    .single();
+  if (error) return { error: error.message };
+  return data as PemohonRow;
+}
+
 export async function createProyekTahap1(data: ProyekTahap1): Promise<{ id: string; kode_kjsb: string } | { error: string }> {
   const supabase = createClient();
+  let klien_id: string | null = data.klien_id ?? null;
+  let pemohon_id: string | null = data.pemohon_id ?? null;
+
+  if (data.klienBaru?.nama_klien?.trim()) {
+    const created = await createKlien({
+      nama_klien: data.klienBaru.nama_klien.trim(),
+      nomor_telepon_klien: data.klienBaru.nomor_telepon_klien,
+    });
+    if ("error" in created) return created;
+    klien_id = created.id;
+  }
+
+  if (data.pemohonBaru?.nama_pemohon?.trim()) {
+    const created = await createPemohon({
+      nama_pemohon: data.pemohonBaru.nama_pemohon.trim(),
+      nomor_telepon_pemohon: data.pemohonBaru.nomor_telepon_pemohon,
+      nik_pemohon: data.pemohonBaru.nik_pemohon,
+      alamat_pemohon: data.pemohonBaru.alamat_pemohon,
+    });
+    if ("error" in created) return created;
+    pemohon_id = created.id;
+  }
+
   const { data: row, error } = await supabase
     .from("proyek_kjsb")
     .insert({
       tgl_permohonan: data.tgl_permohonan || null,
-      nama_klien: data.nama_klien || null,
-      hp_klien: data.hp_klien || null,
-      nama_pemohon: data.nama_pemohon || null,
-      hp_pemohon: data.hp_pemohon || null,
+      klien_id: klien_id || null,
+      pemohon_id: pemohon_id || null,
       luas_permohonan: data.luas_permohonan ?? null,
       penggunaan_tanah_a: data.penggunaan_tanah_a || null,
       no_tanda_terima: data.no_tanda_terima || null,
@@ -44,7 +134,7 @@ export async function getProyekByKode(kode_kjsb: string): Promise<ProyekRow | nu
   const supabase = createClient();
   const { data, error } = await supabase
     .from("proyek_kjsb")
-    .select("*")
+    .select("*, klien(nama_klien, nomor_telepon_klien), pemohon(nama_pemohon, nomor_telepon_pemohon, nik_pemohon, alamat_pemohon)")
     .eq("kode_kjsb", kode_kjsb)
     .single();
   if (error) {

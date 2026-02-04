@@ -120,7 +120,7 @@ export default function FormTahap3() {
         <form onSubmit={onSubmit} className="space-y-6">
           <p className="text-sm text-slate-600">
             Proyek: <span className="font-medium text-slate-800">{proyek.kode_kjsb}</span>
-            {proyek.nama_pemohon ? ` — ${proyek.nama_pemohon}` : ""}
+            {proyek.pemohon?.nama_pemohon ? ` — ${proyek.pemohon.nama_pemohon}` : ""}
           </p>
 
           <div className="card-section space-y-4">

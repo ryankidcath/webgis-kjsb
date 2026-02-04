@@ -5,6 +5,8 @@ import { createProyekTahap1 } from "@/app/actions/proyek";
 import type { PenggunaanTanah } from "@/types/proyek";
 import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import DateInput from "@/components/forms/DateInput";
+import AutocompleteKlien, { type KlienValue } from "@/components/forms/AutocompleteKlien";
+import AutocompletePemohon, { type PemohonValue } from "@/components/forms/AutocompletePemohon";
 
 const PENGGUNAAN_TANAH_OPTIONS: { value: PenggunaanTanah; label: string }[] = [
   { value: "pertanian", label: "Pertanian" },
@@ -18,6 +20,8 @@ export default function FormTahap1() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const [generatedKode, setGeneratedKode] = useState<string | null>(null);
+  const [klienValue, setKlienValue] = useState<KlienValue>(null);
+  const [pemohonValue, setPemohonValue] = useState<PemohonValue>(null);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -26,12 +30,24 @@ export default function FormTahap1() {
     setLoading(true);
     const form = e.currentTarget;
     const formData = new FormData(form);
+
     const data = {
       tgl_permohonan: (formData.get("tgl_permohonan") as string) || undefined,
-      nama_klien: (formData.get("nama_klien") as string) || undefined,
-      hp_klien: (formData.get("hp_klien") as string) || undefined,
-      nama_pemohon: (formData.get("nama_pemohon") as string) || undefined,
-      hp_pemohon: (formData.get("hp_pemohon") as string) || undefined,
+      klien_id: klienValue && "id" in klienValue ? klienValue.id : undefined,
+      pemohon_id: pemohonValue && "id" in pemohonValue ? pemohonValue.id : undefined,
+      klienBaru:
+        klienValue && "baru" in klienValue && klienValue.baru.nama_klien?.trim()
+          ? { nama_klien: klienValue.baru.nama_klien.trim(), nomor_telepon_klien: klienValue.baru.nomor_telepon_klien }
+          : undefined,
+      pemohonBaru:
+        pemohonValue && "baru" in pemohonValue && pemohonValue.baru.nama_pemohon?.trim()
+          ? {
+              nama_pemohon: pemohonValue.baru.nama_pemohon.trim(),
+              nomor_telepon_pemohon: pemohonValue.baru.nomor_telepon_pemohon,
+              nik_pemohon: pemohonValue.baru.nik_pemohon,
+              alamat_pemohon: pemohonValue.baru.alamat_pemohon,
+            }
+          : undefined,
       luas_permohonan: formData.get("luas_permohonan") ? Number(formData.get("luas_permohonan")) : undefined,
       penggunaan_tanah_a: (formData.get("penggunaan_tanah_a") as PenggunaanTanah) || undefined,
       no_tanda_terima: (formData.get("no_tanda_terima") as string) || undefined,
@@ -44,6 +60,7 @@ export default function FormTahap1() {
       tgl_kwitansi: (formData.get("tgl_kwitansi") as string) || undefined,
       nominal_bayar: formData.get("nominal_bayar") ? Number(formData.get("nominal_bayar")) : undefined,
     };
+
     const result = await createProyekTahap1(data);
     setLoading(false);
     if ("error" in result) {
@@ -63,21 +80,13 @@ export default function FormTahap1() {
             <label className="label-base">Tanggal Permohonan</label>
             <DateInput name="tgl_permohonan" />
           </div>
-          <div>
-            <label className="label-base">Nama Klien</label>
-            <input type="text" name="nama_klien" className="input-base" placeholder="Nama lengkap klien" />
+          <div className="sm:col-span-2">
+            <label className="label-base">Klien</label>
+            <AutocompleteKlien value={klienValue} onChange={setKlienValue} />
           </div>
-          <div>
-            <label className="label-base">HP Klien</label>
-            <input type="text" name="hp_klien" className="input-base" placeholder="Nomor HP" />
-          </div>
-          <div>
-            <label className="label-base">Nama Pemohon</label>
-            <input type="text" name="nama_pemohon" className="input-base" placeholder="Nama lengkap pemohon" />
-          </div>
-          <div>
-            <label className="label-base">HP Pemohon</label>
-            <input type="text" name="hp_pemohon" className="input-base" placeholder="Nomor HP" />
+          <div className="sm:col-span-2">
+            <label className="label-base">Pemohon</label>
+            <AutocompletePemohon value={pemohonValue} onChange={setPemohonValue} />
           </div>
           <div>
             <label className="label-base">Luas Permohonan (m²)</label>
