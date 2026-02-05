@@ -21,7 +21,7 @@ export default async function DashboardLayout({
             className="flex items-center gap-2 font-semibold text-slate-800 text-base shrink-0 transition-colors duration-200 hover:text-primary-600"
           >
             <Map className="w-6 h-6 text-primary-600 shrink-0" />
-            WebGIS KJSB Benning dan Rekan
+            Basis Data PLM - KJSB Benning dan Rekan
           </Link>
           <div className="h-8 w-px bg-slate-200 shrink-0 hidden sm:block" aria-hidden />
           <NavLinks />

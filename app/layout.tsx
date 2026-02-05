@@ -9,7 +9,7 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "WebGIS KJSB Benning dan Rekan",
+  title: "Basis Data PLM - KJSB Benning dan Rekan",
   description: "Spatial Management System",
 };
 
