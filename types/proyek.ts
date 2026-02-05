@@ -20,7 +20,16 @@ export interface PemohonRow {
   updated_at?: string;
 }
 
+export interface SurveyorRow {
+  id: string;
+  nama: string;
+  hp: string | null;
+  lisensi: string | null;
+  created_at?: string;
+}
+
 export interface ProyekTahap1 {
+  kode_kjsb?: string | null;
   tgl_permohonan?: string;
   klien_id?: string | null;
   pemohon_id?: string | null;
@@ -60,9 +69,7 @@ export interface ProyekTahap3 {
   no_surat_pemberitahuan?: string;
   tgl_surat_pemberitahuan?: string;
   tgl_pengukuran?: string;
-  nama_surveyor?: string;
-  hp_surveyor?: string;
-  lisensi_surveyor?: string;
+  surveyor_id?: string | null;
 }
 
 export interface ProyekTahap4 {
@@ -99,6 +106,8 @@ export interface ProyekRow {
   pemohon_id?: string | null;
   klien?: Pick<KlienRow, "nama_klien" | "nomor_telepon_klien"> | null;
   pemohon?: Pick<PemohonRow, "nama_pemohon" | "nomor_telepon_pemohon" | "nik_pemohon" | "alamat_pemohon"> | null;
+  surveyor_id?: string | null;
+  surveyor?: Pick<SurveyorRow, "nama" | "hp" | "lisensi"> | null;
   luas_permohonan?: number | null;
   penggunaan_tanah_a?: PenggunaanTanah | null;
   no_tanda_terima?: string | null;
@@ -122,9 +131,6 @@ export interface ProyekRow {
   no_surat_pemberitahuan?: string | null;
   tgl_surat_pemberitahuan?: string | null;
   tgl_pengukuran?: string | null;
-  nama_surveyor?: string | null;
-  hp_surveyor?: string | null;
-  lisensi_surveyor?: string | null;
   no_berkas_legalisasi_gu?: string | null;
   tgl_berkas_legalisasi_gu?: string | null;
   luas_hasil_ukur?: number | null;

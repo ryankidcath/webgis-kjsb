@@ -26,13 +26,19 @@ export default function FormTahap3() {
 
   useEffect(() => {
     if (!proyek) return;
+    const surveyor = proyek.surveyor;
+    const sid = proyek.surveyor_id ?? null;
     setSurveyorFields({
-      nama_surveyor: proyek.nama_surveyor ?? "",
-      hp_surveyor: proyek.hp_surveyor ?? "",
-      lisensi_surveyor: proyek.lisensi_surveyor ?? "",
+      nama_surveyor: surveyor?.nama ?? "",
+      hp_surveyor: surveyor?.hp ?? "",
+      lisensi_surveyor: surveyor?.lisensi ?? "",
     });
-    const match = surveyorList.find((s) => s.nama === (proyek.nama_surveyor ?? ""));
-    setSelectedSurveyorId(match ? match.id : OPT_NEW);
+    if (sid) {
+      const inList = surveyorList.some((s) => s.id === sid);
+      setSelectedSurveyorId(inList ? sid : OPT_NEW);
+    } else {
+      setSelectedSurveyorId(OPT_NEW);
+    }
   }, [proyek, surveyorList]);
 
   async function onLookup(kode?: string) {
@@ -61,19 +67,20 @@ export default function FormTahap3() {
     setLoading(true);
     const form = e.currentTarget;
     const formData = new FormData(form);
-    let nama_surveyor = surveyorFields.nama_surveyor.trim();
-    let hp_surveyor = surveyorFields.hp_surveyor.trim();
-    let lisensi_surveyor = surveyorFields.lisensi_surveyor.trim();
+    let surveyorId: string | null = selectedSurveyorId === OPT_NEW ? null : selectedSurveyorId;
+    const nama_surveyor = surveyorFields.nama_surveyor.trim();
     if (selectedSurveyorId === OPT_NEW && nama_surveyor) {
-      const created = await createSurveyor(nama_surveyor, hp_surveyor, lisensi_surveyor);
+      const created = await createSurveyor(
+        nama_surveyor,
+        surveyorFields.hp_surveyor.trim(),
+        surveyorFields.lisensi_surveyor.trim()
+      );
       if ("error" in created) {
         setLoading(false);
         setMessage({ type: "error", text: created.error });
         return;
       }
-      nama_surveyor = created.nama;
-      hp_surveyor = created.hp ?? "";
-      lisensi_surveyor = created.lisensi ?? "";
+      surveyorId = created.id;
       setSurveyorList((prev) => [...prev, created]);
     }
     const data = {
@@ -82,9 +89,7 @@ export default function FormTahap3() {
       no_surat_pemberitahuan: (formData.get("no_surat_pemberitahuan") as string) || undefined,
       tgl_surat_pemberitahuan: (formData.get("tgl_surat_pemberitahuan") as string) || undefined,
       tgl_pengukuran: (formData.get("tgl_pengukuran") as string) || undefined,
-      nama_surveyor: nama_surveyor || undefined,
-      hp_surveyor: hp_surveyor || undefined,
-      lisensi_surveyor: lisensi_surveyor || undefined,
+      surveyor_id: surveyorId,
     };
     const result = await updateProyekTahap3(kodeKjsb.trim(), data);
     setLoading(false);

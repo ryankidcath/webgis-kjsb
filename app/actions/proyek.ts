@@ -11,7 +11,10 @@ import type {
   ProyekTahap4,
   ProyekTahap5,
   ProyekMapFeature,
+  SurveyorRow,
 } from "@/types/proyek";
+
+export type { SurveyorRow };
 
 export async function searchKlien(query: string): Promise<KlienRow[]> {
   const supabase = createClient();
@@ -105,9 +108,11 @@ export async function createProyekTahap1(data: ProyekTahap1): Promise<{ id: stri
     pemohon_id = created.id;
   }
 
+  const kodeManual = (data.kode_kjsb || "").trim() || null;
   const { data: row, error } = await supabase
     .from("proyek_kjsb")
     .insert({
+      kode_kjsb: kodeManual,
       tgl_permohonan: data.tgl_permohonan || null,
       klien_id: klien_id || null,
       pemohon_id: pemohon_id || null,
@@ -130,11 +135,59 @@ export async function createProyekTahap1(data: ProyekTahap1): Promise<{ id: stri
   return { id: row.id, kode_kjsb: row.kode_kjsb };
 }
 
+export async function updateProyekTahap1(kode_kjsb: string, data: ProyekTahap1): Promise<{ ok: true } | { error: string }> {
+  const supabase = createClient();
+  let klien_id: string | null = data.klien_id ?? null;
+  let pemohon_id: string | null = data.pemohon_id ?? null;
+
+  if (data.klienBaru?.nama_klien?.trim()) {
+    const created = await createKlien({
+      nama_klien: data.klienBaru.nama_klien.trim(),
+      nomor_telepon_klien: data.klienBaru.nomor_telepon_klien,
+    });
+    if ("error" in created) return created;
+    klien_id = created.id;
+  }
+
+  if (data.pemohonBaru?.nama_pemohon?.trim()) {
+    const created = await createPemohon({
+      nama_pemohon: data.pemohonBaru.nama_pemohon.trim(),
+      nomor_telepon_pemohon: data.pemohonBaru.nomor_telepon_pemohon,
+      nik_pemohon: data.pemohonBaru.nik_pemohon,
+      alamat_pemohon: data.pemohonBaru.alamat_pemohon,
+    });
+    if ("error" in created) return created;
+    pemohon_id = created.id;
+  }
+
+  const { error } = await supabase
+    .from("proyek_kjsb")
+    .update({
+      tgl_permohonan: data.tgl_permohonan || null,
+      klien_id: klien_id ?? null,
+      pemohon_id: pemohon_id ?? null,
+      luas_permohonan: data.luas_permohonan ?? null,
+      penggunaan_tanah_a: data.penggunaan_tanah_a || null,
+      no_tanda_terima: data.no_tanda_terima || null,
+      tgl_tanda_terima: data.tgl_tanda_terima || null,
+      no_sla: data.no_sla || null,
+      tgl_sla: data.tgl_sla || null,
+      no_invoice: data.no_invoice || null,
+      tgl_invoice: data.tgl_invoice || null,
+      no_kwitansi: data.no_kwitansi || null,
+      tgl_kwitansi: data.tgl_kwitansi || null,
+      nominal_bayar: data.nominal_bayar ?? null,
+    })
+    .eq("kode_kjsb", kode_kjsb);
+  if (error) return { error: error.message };
+  return { ok: true };
+}
+
 export async function getProyekByKode(kode_kjsb: string): Promise<ProyekRow | null | { error: string }> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("proyek_kjsb")
-    .select("*, klien(nama_klien, nomor_telepon_klien), pemohon(nama_pemohon, nomor_telepon_pemohon, nik_pemohon, alamat_pemohon)")
+    .select("*, klien(nama_klien, nomor_telepon_klien), pemohon(nama_pemohon, nomor_telepon_pemohon, nik_pemohon, alamat_pemohon), surveyor(nama, hp, lisensi)")
     .eq("kode_kjsb", kode_kjsb)
     .single();
   if (error) {
@@ -204,9 +257,7 @@ export async function updateProyekTahap3(kode_kjsb: string, data: ProyekTahap3):
       no_surat_pemberitahuan: data.no_surat_pemberitahuan ?? undefined,
       tgl_surat_pemberitahuan: data.tgl_surat_pemberitahuan ?? undefined,
       tgl_pengukuran: data.tgl_pengukuran ?? undefined,
-      nama_surveyor: data.nama_surveyor ?? undefined,
-      hp_surveyor: data.hp_surveyor ?? undefined,
-      lisensi_surveyor: data.lisensi_surveyor ?? undefined,
+      surveyor_id: data.surveyor_id ?? null,
     })
     .eq("kode_kjsb", kode_kjsb);
   if (error) return { error: error.message };
@@ -284,14 +335,6 @@ export async function updateProyekTahap5(kode_kjsb: string, data: ProyekTahap5):
     .eq("kode_kjsb", kode_kjsb);
   if (error) return { error: error.message };
   return { ok: true };
-}
-
-export interface SurveyorRow {
-  id: string;
-  nama: string;
-  hp: string | null;
-  lisensi: string | null;
-  created_at?: string;
 }
 
 export async function getSurveyorList(): Promise<SurveyorRow[]> {

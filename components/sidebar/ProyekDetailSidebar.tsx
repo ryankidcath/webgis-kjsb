@@ -168,9 +168,9 @@ export default function ProyekDetailSidebar({ proyek, onClose, loading }: Proyek
           <Row label="No. Surat Pemberitahuan" value={proyek.no_surat_pemberitahuan} />
           <Row label="Tgl. Surat Pemberitahuan" value={formatDate(proyek.tgl_surat_pemberitahuan)} />
           <Row label="Tgl. Pengukuran" value={formatDate(proyek.tgl_pengukuran)} />
-          <Row label="Nama Surveyor" value={proyek.nama_surveyor} />
-          <Row label="HP Surveyor" value={proyek.hp_surveyor} />
-          <Row label="Lisensi Surveyor" value={proyek.lisensi_surveyor} />
+          <Row label="Nama Surveyor" value={proyek.surveyor?.nama} />
+          <Row label="HP Surveyor" value={proyek.surveyor?.hp ?? undefined} />
+          <Row label="Lisensi Surveyor" value={proyek.surveyor?.lisensi ?? undefined} />
         </Section>
 
         <Section title="Legalisasi GU" icon={ClipboardList}>
