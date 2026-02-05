@@ -230,6 +230,21 @@ export async function getNamaPemohonSuggestionsForMap(query: string): Promise<st
   return unique.slice(0, 10);
 }
 
+function normalizeGeom(geom: unknown): ProyekMapFeature["geom"] {
+  if (geom == null) return null;
+  if (typeof geom === "string") {
+    try {
+      return JSON.parse(geom) as ProyekMapFeature["geom"];
+    } catch {
+      return null;
+    }
+  }
+  if (typeof geom === "object" && geom !== null && "type" in geom && "coordinates" in geom) {
+    return geom as ProyekMapFeature["geom"];
+  }
+  return null;
+}
+
 export async function getProyekWithGeom(namaPemohon?: string): Promise<ProyekMapFeature[] | { error: string }> {
   const supabase = createClient();
   let q = supabase.from("proyek_kjsb_map").select("id, kode_kjsb, nama_pemohon, geom");
@@ -242,7 +257,7 @@ export async function getProyekWithGeom(namaPemohon?: string): Promise<ProyekMap
     id: r.id,
     kode_kjsb: r.kode_kjsb,
     nama_pemohon: r.nama_pemohon,
-    geom: r.geom as ProyekMapFeature["geom"],
+    geom: normalizeGeom(r.geom),
   }));
 }
 
