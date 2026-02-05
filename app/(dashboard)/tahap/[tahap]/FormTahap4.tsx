@@ -88,6 +88,13 @@ export default function FormTahap4() {
           <div className="card-section space-y-4">
             <h2 className="text-sm font-semibold text-slate-800 border-b border-slate-100 pb-2">File GeoJSON</h2>
             <div>
+              <label className="label-base">Sistem koordinat file</label>
+              <select name="input_srid" className="input-base" defaultValue="23835">
+                <option value="23835">TM-3 Zona 49.1 (EPSG:23835) — hasil pengukuran</option>
+                <option value="4326">WGS84 (lon/lat derajat, EPSG:4326)</option>
+              </select>
+            </div>
+            <div>
               <label className="label-base">File GeoJSON (.geojson) *</label>
               <input
                 type="file"

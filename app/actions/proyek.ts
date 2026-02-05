@@ -316,10 +316,14 @@ export async function uploadGeojsonTahap4(
   const geojsonStr = extractFirstPolygonFromGeoJSON(parsed);
   if (!geojsonStr) return { error: "GeoJSON harus berisi Feature/FeatureCollection dengan geometry Polygon/MultiPolygon" };
 
+  const inputSrid = formData.get("input_srid");
+  const p_input_srid = inputSrid === "23835" ? 23835 : 4326;
+
   const supabase = createClient();
   const { error } = await supabase.rpc("update_proyek_tahap4_with_geom", {
     p_kode_kjsb: kode_kjsb,
     p_geojson: geojsonStr,
+    p_input_srid: p_input_srid,
     p_no_berkas_legalisasi_gu: (formData.get("no_berkas_legalisasi_gu") as string) || null,
     p_tgl_berkas_legalisasi_gu: (formData.get("tgl_berkas_legalisasi_gu") as string) || null,
     p_luas_hasil_ukur: formData.get("luas_hasil_ukur") ? Number(formData.get("luas_hasil_ukur")) : null,
