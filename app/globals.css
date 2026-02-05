@@ -4,6 +4,8 @@
 
 /* Leaflet CSS (required for map tiles/markers) */
 @import "leaflet/dist/leaflet.css";
+/* React DatePicker */
+@import "react-datepicker/dist/react-datepicker.css";
 
 :root {
   --foreground-rgb: 15 23 42;
