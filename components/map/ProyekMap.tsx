@@ -51,7 +51,7 @@ function FitBounds({ features }: { features: ProyekMapFeature[] }) {
         });
       }
     });
-    if (bounds.isValid()) map.flyToBounds(bounds, { padding: [24, 24], maxZoom: 18, duration: 1.2 });
+    if (bounds.isValid()) map.flyToBounds(bounds, { padding: [24, 24], maxZoom: 19, duration: 1.2 });
   }, [map, features]);
   return null;
 }
@@ -79,7 +79,7 @@ function FitBoundsToKode({
       });
     }
     if (bounds.isValid()) {
-      map.flyToBounds(bounds, { padding: [40, 40], maxZoom: 16, duration: 1.2 });
+      map.flyToBounds(bounds, { padding: [40, 40], maxZoom: 19, duration: 1.2 });
       onDone();
     }
   }, [map, features, zoomToKode, onDone]);
