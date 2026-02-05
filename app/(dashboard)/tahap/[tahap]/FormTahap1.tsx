@@ -114,10 +114,16 @@ export default function FormTahap1() {
       }
       setMessage({ type: "ok", text: "Tahap 1 berhasil diupdate." });
     } else {
-      const kodeManual = (formData.get("kode_kjsb_manual") as string)?.trim();
+      const kodeInput = (formData.get("kode_kjsb_manual") as string)?.trim() ?? "";
+      const YYYY_XXXX = /^\d{4}-\d{4}$/;
+      if (!YYYY_XXXX.test(kodeInput)) {
+        setLoading(false);
+        setMessage({ type: "error", text: "Kode KJSB wajib diisi dengan format Tahun-Nomor urut (contoh: 2026-0086)." });
+        return;
+      }
       const result = await createProyekTahap1({
         ...data,
-        kode_kjsb: kodeManual || undefined,
+        kode_kjsb: "BKS-" + kodeInput,
       });
       setLoading(false);
       if ("error" in result) {
@@ -172,13 +178,17 @@ export default function FormTahap1() {
           <div className="grid gap-4 sm:grid-cols-2">
             {!proyek && (
               <div>
-                <label className="label-base">Kode KJSB (opsional)</label>
+                <label className="label-base">Tahun - Nomor urut (YYYY-XXXX) <span className="text-red-600">*</span></label>
                 <input
                   type="text"
                   name="kode_kjsb_manual"
                   className="input-base"
-                  placeholder="Kosongkan untuk auto (BKS-2026-xxxx)"
+                  placeholder="contoh: 2026-0086"
+                  required
+                  pattern="\d{4}-\d{4}"
+                  title="Format: 4 digit tahun, strip, 4 digit nomor (contoh: 2026-0086)"
                 />
+                <p className="text-xs text-slate-500 mt-1">Kode lengkap akan menjadi BKS-YYYY-XXXX</p>
               </div>
             )}
             <div>

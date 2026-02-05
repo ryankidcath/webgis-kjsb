@@ -108,11 +108,17 @@ export async function createProyekTahap1(data: ProyekTahap1): Promise<{ id: stri
     pemohon_id = created.id;
   }
 
-  const kodeManual = (data.kode_kjsb || "").trim() || null;
+  const rawKode = (data.kode_kjsb || "").trim();
+  if (!rawKode)
+    return { error: "Kode KJSB wajib diisi (format: Tahun-Nomor urut, contoh: 2026-0086)." };
+  const kodeKjsb = rawKode.toUpperCase().startsWith("BKS-") ? rawKode : "BKS-" + rawKode;
+  const existing = await getProyekByKode(kodeKjsb);
+  if (existing && !("error" in existing))
+    return { error: "Berkas dengan kode KJSB ini sudah ada. Gunakan kode lain." };
   const { data: row, error } = await supabase
     .from("proyek_kjsb")
     .insert({
-      kode_kjsb: kodeManual,
+      kode_kjsb: kodeKjsb,
       tgl_permohonan: data.tgl_permohonan || null,
       klien_id: klien_id || null,
       pemohon_id: pemohon_id || null,
@@ -131,8 +137,7 @@ export async function createProyekTahap1(data: ProyekTahap1): Promise<{ id: stri
     .select("id, kode_kjsb")
     .single();
   if (error) return { error: error.message };
-  if (!row?.kode_kjsb) return { error: "kode_kjsb not generated" };
-  return { id: row.id, kode_kjsb: row.kode_kjsb };
+  return { id: row.id, kode_kjsb: kodeKjsb };
 }
 
 export async function updateProyekTahap1(kode_kjsb: string, data: ProyekTahap1): Promise<{ ok: true } | { error: string }> {
