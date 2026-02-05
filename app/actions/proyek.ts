@@ -213,6 +213,23 @@ export async function getKodeKjsbSuggestions(query: string): Promise<{ kode_kjsb
   return (data ?? []).map((r: { kode_kjsb: string | null }) => ({ kode_kjsb: r.kode_kjsb ?? "" })).filter((r) => r.kode_kjsb);
 }
 
+export async function getNamaPemohonSuggestionsForMap(query: string): Promise<string[]> {
+  const q = (query || "").trim();
+  if (!q) return [];
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("proyek_kjsb_map")
+    .select("nama_pemohon")
+    .ilike("nama_pemohon", `%${q}%`)
+    .limit(20);
+  if (error) return [];
+  const names = (data ?? [])
+    .map((r: { nama_pemohon: string | null }) => r.nama_pemohon)
+    .filter((n): n is string => n != null && n.trim() !== "");
+  const unique = Array.from(new Set(names));
+  return unique.slice(0, 10);
+}
+
 export async function getProyekWithGeom(namaPemohon?: string): Promise<ProyekMapFeature[] | { error: string }> {
   const supabase = createClient();
   let q = supabase.from("proyek_kjsb_map").select("id, kode_kjsb, nama_pemohon, geom");

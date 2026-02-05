@@ -32,7 +32,7 @@ function FitBounds({ features }: { features: ProyekMapFeature[] }) {
         });
       }
     });
-    if (bounds.isValid()) map.fitBounds(bounds, { padding: [24, 24], maxZoom: 14 });
+    if (bounds.isValid()) map.fitBounds(bounds, { padding: [24, 24], maxZoom: 18 });
   }, [map, features]);
   return null;
 }

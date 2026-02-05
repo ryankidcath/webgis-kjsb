@@ -1,13 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { getProyekByKode, getProyekWithGeom } from "@/app/actions/proyek";
+import { getProyekByKode, getProyekWithGeom, getNamaPemohonSuggestionsForMap } from "@/app/actions/proyek";
 import type { ProyekMapFeature } from "@/types/proyek";
 import type { ProyekRow } from "@/types/proyek";
 import ProyekDetailSidebar from "@/components/sidebar/ProyekDetailSidebar";
 import { Search, MapPinned } from "lucide-react";
+
+const DEBOUNCE_MS = 280;
 
 const ProyekMapDynamic = dynamic(
   () => import("@/components/map/ProyekMapDynamic"),
@@ -27,6 +29,11 @@ export default function LayoutWithMap({ initialFeatures, children }: LayoutWithM
     Array.isArray(initialFeatures) ? initialFeatures : []
   );
   const [searchNamaPemohon, setSearchNamaPemohon] = useState("");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchWrapperRef = useRef<HTMLDivElement>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedProyek, setSelectedProyek] = useState<ProyekRow | null>(null);
   const [sidebarLoading, setSidebarLoading] = useState(false);
@@ -58,10 +65,52 @@ export default function LayoutWithMap({ initialFeatures, children }: LayoutWithM
     else setSelectedProyek(null);
   }, []);
 
-  async function onSearch() {
+  const onSearch = useCallback(async () => {
     setSidebarOpen(false);
+    setShowSuggestions(false);
     const result = await getProyekWithGeom(searchNamaPemohon.trim() || undefined);
     if (Array.isArray(result)) setFeatures(result);
+  }, [searchNamaPemohon]);
+
+  useEffect(() => {
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    if (!searchNamaPemohon.trim()) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    searchDebounceRef.current = setTimeout(() => {
+      setSuggestionsLoading(true);
+      getNamaPemohonSuggestionsForMap(searchNamaPemohon).then((list) => {
+        setSuggestions(list);
+        setShowSuggestions(list.length > 0);
+        setSuggestionsLoading(false);
+      });
+      searchDebounceRef.current = null;
+    }, DEBOUNCE_MS);
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    };
+  }, [searchNamaPemohon]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (searchWrapperRef.current && !searchWrapperRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  function handleSelectSuggestion(nama: string) {
+    setSearchNamaPemohon(nama);
+    setShowSuggestions(false);
+    setSuggestions([]);
+    setSidebarOpen(false);
+    getProyekWithGeom(nama).then((result) => {
+      if (Array.isArray(result)) setFeatures(result);
+    });
   }
 
   const isPetaPage = pathname === "/";
@@ -90,16 +139,44 @@ export default function LayoutWithMap({ initialFeatures, children }: LayoutWithM
                 onSubmit={(e) => { e.preventDefault(); onSearch(); }}
                 className="flex flex-wrap gap-2"
               >
-                <div className="relative flex-1 min-w-[200px]">
+                <div ref={searchWrapperRef} className="relative flex-1 min-w-[200px]">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                   <input
                     type="text"
                     placeholder="Cari berdasarkan Nama Pemohon..."
                     value={searchNamaPemohon}
                     onChange={(e) => setSearchNamaPemohon(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") onSearch(); }}
+                    onFocus={() => searchNamaPemohon.trim() && suggestions.length > 0 && setShowSuggestions(true)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        setShowSuggestions(false);
+                        onSearch();
+                      }
+                    }}
                     className="input-base pl-9"
+                    autoComplete="off"
                   />
+                  {showSuggestions && (
+                    <ul
+                      className="absolute z-50 mt-1 w-full max-h-48 overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg py-1"
+                      role="listbox"
+                    >
+                      {suggestionsLoading ? (
+                        <li className="px-3 py-2 text-sm text-slate-500">Memuat...</li>
+                      ) : (
+                        suggestions.map((nama) => (
+                          <li
+                            key={nama}
+                            role="option"
+                            className="px-3 py-2 text-sm text-slate-800 hover:bg-primary-50 cursor-pointer"
+                            onMouseDown={() => handleSelectSuggestion(nama)}
+                          >
+                            {nama}
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                  )}
                 </div>
                 <button type="submit" className="btn-primary">
                   Cari
