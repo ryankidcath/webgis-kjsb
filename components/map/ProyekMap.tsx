@@ -1,10 +1,29 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
+import { useCallback, useEffect, useMemo, useState, Fragment } from "react";
+import { MapContainer, TileLayer, GeoJSON, Marker, useMap } from "react-leaflet";
 import L from "leaflet";
+import type { Polygon, MultiPolygon } from "geojson";
 import type { ProyekMapFeature } from "@/types/proyek";
 import { getProyekWithGeom } from "@/app/actions/proyek";
+
+function getCentroid(geom: Polygon | MultiPolygon): [number, number] {
+  let ring: [number, number][];
+  if (geom.type === "Polygon") {
+    ring = geom.coordinates[0] as [number, number][];
+  } else {
+    ring = geom.coordinates[0][0] as [number, number][];
+  }
+  if (ring.length === 0) return [0, 0];
+  let sumLng = 0;
+  let sumLat = 0;
+  for (const [lng, lat] of ring) {
+    sumLng += lng;
+    sumLat += lat;
+  }
+  const n = ring.length;
+  return [sumLat / n, sumLng / n];
+}
 
 // Fix default marker icons in Next.js (Leaflet uses file paths that break with bundler)
 delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
@@ -127,19 +146,44 @@ export default function ProyekMap({
         {filtered.map((f) => {
           if (!f.geom) return null;
           const geojson = { type: "Feature" as const, properties: { id: f.id, kode_kjsb: f.kode_kjsb, nama_pemohon: f.nama_pemohon }, geometry: f.geom };
+          const labelHtml =
+            f.kode_kjsb != null && f.kode_kjsb.trim() !== ""
+              ? `<span class="polygon-kode-label">${String(f.kode_kjsb)
+                  .replace(/&/g, "&amp;")
+                  .replace(/</g, "&lt;")
+                  .replace(/>/g, "&gt;")}</span>`
+              : "";
+          const labelIcon =
+            labelHtml !== ""
+              ? L.divIcon({
+                  html: labelHtml,
+                  className: "polygon-kode-label-wrapper",
+                  iconSize: [120, 24],
+                  iconAnchor: [60, 12],
+                })
+              : null;
           return (
-            <GeoJSON
-              key={f.id}
-              data={geojson}
-              eventHandlers={{
-                click: () => onFeatureClick?.(f),
-              }}
-              style={{
-                color: "#0ea5e9",
-                weight: 2,
-                fillOpacity: 0.2,
-              }}
-            />
+            <Fragment key={f.id}>
+              <GeoJSON
+                data={geojson}
+                eventHandlers={{
+                  click: () => onFeatureClick?.(f),
+                }}
+                style={{
+                  color: "#0ea5e9",
+                  weight: 2,
+                  fillOpacity: 0.2,
+                }}
+              />
+              {labelIcon && (
+                <Marker
+                  position={getCentroid(f.geom)}
+                  icon={labelIcon}
+                  keyboard={false}
+                  interactive={false}
+                />
+              )}
+            </Fragment>
           );
         })}
       </MapContainer>
