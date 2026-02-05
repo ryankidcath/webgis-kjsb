@@ -245,9 +245,14 @@ function normalizeGeom(geom: unknown): ProyekMapFeature["geom"] {
   return null;
 }
 
+const MAP_GEOM_MAX_ROWS = 5000;
+
 export async function getProyekWithGeom(namaPemohon?: string): Promise<ProyekMapFeature[] | { error: string }> {
   const supabase = createClient();
-  let q = supabase.from("proyek_kjsb_map").select("id, kode_kjsb, nama_pemohon, geom");
+  let q = supabase
+    .from("proyek_kjsb_map")
+    .select("id, kode_kjsb, nama_pemohon, geom")
+    .limit(MAP_GEOM_MAX_ROWS);
   if (namaPemohon?.trim()) {
     q = q.ilike("nama_pemohon", `%${namaPemohon.trim()}%`);
   }
